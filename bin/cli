@@ -1,0 +1,8 @@
+#!/usr/bin/env node
+const { spawn } = require('child_process');
+
+const cliProcess = spawn('node', ['./cli.js', ...process.argv.slice(2)], { stdio: 'inherit' });
+
+cliProcess.on('close', (code) => {
+    console.log(`cli.js process exited with code ${code}`);
+});
