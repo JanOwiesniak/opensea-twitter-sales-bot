@@ -31,7 +31,15 @@ async function getCache(key) {
 // Function to initialize cache with environment variables
 async function initializeCacheWithEnvVars() {
     for (const [key, value] of Object.entries(process.env)) {
-        await setCache(key, value);
+        try {
+            await setCache(key, value);
+        } catch (error) {
+            if (error.code === 'ENOENT') {
+                console.log('.env file not found, skipping cache initialization.');
+            } else {
+                throw error;
+            }
+        }
     }
 }
 

@@ -2,6 +2,7 @@ const { generateAuthLink, exchangeToken, authEmitter, refreshAccessToken, checkT
 const { tweet } = require('./tweet');
 require('dotenv').config();
 const { getCache, initializeCacheWithEnvVars } = require('./redisCache');
+const fs = require('fs');
 
 async function handleAuthFlow() {
     const { codeVerifier } = await generateAuthLink();
@@ -13,7 +14,7 @@ async function handleAuthFlow() {
         // Now perform the token exchange
         await exchangeToken(codeVerifier, code);
         server.close(() => {
-            console.log('Auth server is shutting down: ACCESS_TOKEN and REFRESH_TOKEN stored in .env file.');
+            console.log('Auth server is shutting down...');
             // Ensure process exits after server is closed
             process.exit(0);
         });
@@ -56,6 +57,11 @@ async function main() {
     } else if (args.includes('--refresh-token')) {
         console.log('Refreshing token...');
         await refreshAccessToken();
+        if (fs.existsSync('.env')) {
+            console.log('ACCESS_TOKEN and REFRESH_TOKEN stored in .env file.');
+        } else {
+            console.log('.env file does not exist. Tokens will not be stored.');
+        }
         process.exit(0);
     } else {
         console.log('No valid arguments provided. Use --auth to start the authentication flow, --tweet "Your tweet text" to send a tweet, --check-token to verify token validity, --show-token to print the access token and refresh token, --init-cache to initialize the cache, or --refresh-token to refresh the access token.');

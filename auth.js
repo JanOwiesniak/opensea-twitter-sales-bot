@@ -29,18 +29,28 @@ async function exchangeToken(codeVerifier, code) {
     });
 
     // Store these tokens in your .env file for future use
-    let envContent = fs.readFileSync('.env', 'utf8');
-    if (!envContent.includes('ACCESS_TOKEN')) {
-        envContent += `\nACCESS_TOKEN=${accessToken}`;
-    } else {
-        envContent = envContent.replace(/ACCESS_TOKEN=.*/g, `ACCESS_TOKEN=${accessToken}`);
+    let envContent = '';
+    try {
+        envContent = fs.readFileSync('.env', 'utf8');
+        if (!envContent.includes('ACCESS_TOKEN')) {
+            envContent += `\nACCESS_TOKEN=${accessToken}`;
+        } else {
+            envContent = envContent.replace(/ACCESS_TOKEN=.*/g, `ACCESS_TOKEN=${accessToken}`);
+        }
+        if (!envContent.includes('REFRESH_TOKEN')) {
+            envContent += `\nREFRESH_TOKEN=${refreshToken}`;
+        } else {
+            envContent = envContent.replace(/REFRESH_TOKEN=.*/g, `REFRESH_TOKEN=${refreshToken}`);
+        }
+        fs.writeFileSync('.env', envContent);
+        console.log('.env file updated with new tokens.');
+    } catch (error) {
+        if (error.code === 'ENOENT') {
+            console.log('.env file not found, skipping update.');
+        } else {
+            throw error;
+        }
     }
-    if (!envContent.includes('REFRESH_TOKEN')) {
-        envContent += `\nREFRESH_TOKEN=${refreshToken}`;
-    } else {
-        envContent = envContent.replace(/REFRESH_TOKEN=.*/g, `REFRESH_TOKEN=${refreshToken}`);
-    }
-    fs.writeFileSync('.env', envContent);
 
     // Store tokens in Redis
     await setCache('ACCESS_TOKEN', accessToken);
@@ -57,11 +67,20 @@ async function refreshAccessToken() {
         console.log('New refresh token received:', refreshToken);
 
         // Update the .env file with the new tokens
-        let envContent = fs.readFileSync('.env', 'utf8');
-        envContent = envContent.replace(/ACCESS_TOKEN=.*/g, `ACCESS_TOKEN=${accessToken}`);
-        envContent = envContent.replace(/REFRESH_TOKEN=.*/g, `REFRESH_TOKEN=${refreshToken}`);
-        fs.writeFileSync('.env', envContent);
-        console.log('.env file updated with new tokens.');
+        let envContent = '';
+        try {
+            envContent = fs.readFileSync('.env', 'utf8');
+            envContent = envContent.replace(/ACCESS_TOKEN=.*/g, `ACCESS_TOKEN=${accessToken}`);
+            envContent = envContent.replace(/REFRESH_TOKEN=.*/g, `REFRESH_TOKEN=${refreshToken}`);
+            fs.writeFileSync('.env', envContent);
+            console.log('.env file updated with new tokens.');
+        } catch (error) {
+            if (error.code === 'ENOENT') {
+                console.log('.env file not found, skipping update.');
+            } else {
+                throw error;
+            }
+        }
 
         // Ensure new tokens are stored in Redis
         await setCache('ACCESS_TOKEN', accessToken);
