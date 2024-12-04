@@ -50,23 +50,44 @@ async function exchangeToken(codeVerifier, code) {
 
 async function refreshAccessToken() {
     try {
-        const refreshToken = await getCache('REFRESH_TOKEN');
-        const { client: refreshedClient, accessToken, newRefreshToken } = await twitterClient.refreshOAuth2Token(refreshToken);
+        const currentRefreshToken = await getCache('REFRESH_TOKEN');
+        console.log('Current refresh token from cache:', currentRefreshToken);
+        const { accessToken, refreshToken } = await twitterClient.refreshOAuth2Token(currentRefreshToken);
         console.log('Access token refreshed successfully. New access token:', accessToken);
+        console.log('New refresh token received:', refreshToken);
 
         // Update the .env file with the new tokens
         let envContent = fs.readFileSync('.env', 'utf8');
         envContent = envContent.replace(/ACCESS_TOKEN=.*/g, `ACCESS_TOKEN=${accessToken}`);
-        envContent = envContent.replace(/REFRESH_TOKEN=.*/g, `REFRESH_TOKEN=${newRefreshToken}`);
+        envContent = envContent.replace(/REFRESH_TOKEN=.*/g, `REFRESH_TOKEN=${refreshToken}`);
         fs.writeFileSync('.env', envContent);
+        console.log('.env file updated with new tokens.');
 
-        // Store new tokens in Redis
+        // Ensure new tokens are stored in Redis
         await setCache('ACCESS_TOKEN', accessToken);
-        await setCache('REFRESH_TOKEN', newRefreshToken);
+        await setCache('REFRESH_TOKEN', refreshToken);
+        console.log('Tokens updated in cache.');
+
         authEmitter.emit('tokensFetched');
     } catch (error) {
         console.error('Error refreshing access token:', error);
+        if (error.response) {
+            console.error('Response data:', error.response.data);
+            console.error('Response status:', error.response.status);
+            console.error('Response headers:', error.response.headers);
+        }
     }
 }
 
-module.exports = { generateAuthLink, exchangeToken, refreshAccessToken, authEmitter };
+async function checkTokenValidity() {
+    try {
+        const accessToken = await getCache('ACCESS_TOKEN');
+        const client = new TwitterApi(accessToken);
+        const user = await client.v2.me();
+        console.log('Token is valid. Authenticated as:', user.data.username);
+    } catch (error) {
+        console.error('Token is invalid or expired:', error);
+    }
+}
+
+module.exports = { generateAuthLink, exchangeToken, refreshAccessToken, checkTokenValidity, authEmitter };
