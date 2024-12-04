@@ -31,11 +31,7 @@ async function getCache(key) {
 // Function to initialize cache with environment variables
 async function initializeCacheWithEnvVars() {
     for (const [key, value] of Object.entries(process.env)) {
-        const cachedValue = await getCache(key);
-        if (!cachedValue) {
-            await setCache(key, value);
-        } else {
-        }
+        await setCache(key, value);
     }
 }
 

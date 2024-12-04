@@ -42,6 +42,11 @@ async function main() {
         console.log('Checking token validity...');
         await checkTokenValidity();
         process.exit(0); 
+    } else if (args.includes('--init-cache')) {
+        console.log('Initializing cache with environment variables...');
+        await initializeCacheWithEnvVars();
+        console.log('Cache initialized successfully.');
+        process.exit(0);
     } else if (args.includes('--show-token')) {
         const accessToken = await getCache('ACCESS_TOKEN');
         const refreshToken = await getCache('REFRESH_TOKEN');
@@ -53,7 +58,7 @@ async function main() {
         await refreshAccessToken();
         process.exit(0);
     } else {
-        console.log('No valid arguments provided. Use --auth to start the authentication flow, --tweet "Your tweet text" to send a tweet, --check-token to verify token validity, --show-token to print the access token and refresh token, or --refresh-token to refresh the access token.');
+        console.log('No valid arguments provided. Use --auth to start the authentication flow, --tweet "Your tweet text" to send a tweet, --check-token to verify token validity, --show-token to print the access token and refresh token, --init-cache to initialize the cache, or --refresh-token to refresh the access token.');
         throw new Error('No valid arguments provided.');
     }
 }
