@@ -3,7 +3,7 @@ const { tweet } = require('./tweet');
 const { TwitterApi } = require('twitter-api-v2');
 const fs = require('fs');
 require('dotenv').config();
-const { setCache, getCache } = require('./redisCache');
+const { setCache, getCache, initializeCacheWithEnvVars } = require('./redisCache');
 
 async function checkTokenValidity() {
     try {
@@ -51,13 +51,13 @@ async function handleAuthFlow() {
         await exchangeToken(codeVerifier, code);
         server.close(() => {
             console.log('Auth server is shutting down: ACCESS_TOKEN and REFRESH_TOKEN stored in .env file.');
-            process.exit(0); // Exit the process
         });
     });
 }
 
 // CLI to initialize the auth flow, tweet, check token validity, verify access token, or refresh token
-if (require.main === module) {
+async function initializeAndRun() {
+    await initializeCacheWithEnvVars();
     const args = process.argv.slice(2);
     console.log('Arguments received:', args);
     if (args.includes('--auth')) {
@@ -68,19 +68,27 @@ if (require.main === module) {
         const tweetText = args.slice(tweetIndex + 1).join(' ');
         if (tweetText) {
             console.log('Tweeting:', tweetText);
-            tweet(tweetText).then(() => process.exit(0)).catch(console.error);
+            tweet(tweetText).catch(console.error);
         } else {
             console.error('No tweet text provided.');
-            process.exit(1);
+            throw new Error('No tweet text provided.');
         }
     } else if (args.includes('--check-token')) {
         console.log('Checking token validity...');
-        checkTokenValidity().then(() => process.exit(0)).catch(console.error);
+        await checkTokenValidity();
     } else if (args.includes('--refresh-token')) {
         console.log('Refreshing token...');
-        refreshToken().then(() => process.exit(0)).catch(console.error);
+        await refreshToken();
     } else {
         console.log('No valid arguments provided. Use --auth to start the authentication flow, --tweet "Your tweet text" to send a tweet, --check-token to verify token validity, or --refresh-token to refresh the access token.');
-        process.exit(1);
+        throw new Error('No valid arguments provided.');
     }
 }
+
+// Run the initialization and CLI operations
+initializeAndRun().then(() => {
+    process.exit(0);
+}).catch(error => {
+    console.error('Error during CLI operations:', error);
+    process.exit(1);
+});
