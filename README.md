@@ -113,8 +113,10 @@ The bot can be controlled using various command-line arguments:
 
 - `--auth`: Initiates the authentication flow with Twitter. Use this to obtain access and refresh tokens.
 - `--tweet "Your tweet text"`: Sends a tweet with the specified text.
+- `--show-token`: Displays the current access token for verification purposes.
 - `--check-token`: Checks the validity of the current access token.
 - `--refresh-token`: Refreshes the access token using the refresh token.
+- `--init-cache`: Initializes the cache by setting up the necessary data structures and populating them with initial values (this is done automatically when the bot starts up but can be triggered manually).
 
 These commands are executed via the `./bin/cli` script.
 
