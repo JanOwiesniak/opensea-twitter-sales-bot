@@ -23,7 +23,6 @@ async function handleAuthFlow() {
 
 // CLI to initialize the auth flow, tweet, check token validity, verify access token, or refresh token
 async function main() {
-    await initializeCacheWithEnvVars();
     const args = process.argv.slice(2);
     console.log('Arguments received:', args);
     if (args.includes('--auth')) {
