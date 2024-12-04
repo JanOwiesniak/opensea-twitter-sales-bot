@@ -1,9 +1,7 @@
 const { generateAuthLink, exchangeToken, authEmitter, refreshAccessToken, checkTokenValidity } = require('./auth');
 const { tweet } = require('./tweet');
-const { TwitterApi } = require('twitter-api-v2');
-const fs = require('fs');
 require('dotenv').config();
-const { initializeCacheWithEnvVars } = require('./redisCache');
+const { getCache, initializeCacheWithEnvVars } = require('./redisCache');
 
 async function handleAuthFlow() {
     const { codeVerifier } = await generateAuthLink();
@@ -44,12 +42,18 @@ async function main() {
         console.log('Checking token validity...');
         await checkTokenValidity();
         process.exit(0); 
+    } else if (args.includes('--show-token')) {
+        const accessToken = await getCache('ACCESS_TOKEN');
+        const refreshToken = await getCache('REFRESH_TOKEN');
+        console.log('Access Token:', accessToken);
+        console.log('Refresh Token:', refreshToken);
+        process.exit(0);
     } else if (args.includes('--refresh-token')) {
         console.log('Refreshing token...');
         await refreshAccessToken();
         process.exit(0);
     } else {
-        console.log('No valid arguments provided. Use --auth to start the authentication flow, --tweet "Your tweet text" to send a tweet, --check-token to verify token validity, or --refresh-token to refresh the access token.');
+        console.log('No valid arguments provided. Use --auth to start the authentication flow, --tweet "Your tweet text" to send a tweet, --check-token to verify token validity, --show-token to print the access token and refresh token, or --refresh-token to refresh the access token.');
         throw new Error('No valid arguments provided.');
     }
 }
